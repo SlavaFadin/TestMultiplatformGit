@@ -19,10 +19,12 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: 🍎 Setup Xcode
-        uses: actions/setup-xcode@v1
-        with:
-          xcode-version: '15.2'
+      - name: 🍎 Check Xcode Environment
+        run: |
+          echo "Checking Xcode installation..."
+          xcode-select -p
+          xcodebuild -version
+          echo "✅ Xcode is available"
 
       - name: 🔧 Fix Windows line endings
         run: |
@@ -43,21 +45,16 @@ jobs:
           
           echo "🔍 iOS Arm64 content:"
           ls -la shared/build/bin/iosArm64/ || echo "No iosArm64 directory"
-          
-          echo "🔍 iOS X64 content:"
-          ls -la shared/build/bin/iosX64/ || echo "No iosX64 directory"
 
       - name: 📦 Upload iOS Framework
         uses: actions/upload-artifact@v4
         with:
           name: iOS-Shared-Framework
-          path: |
-            shared/build/bin/iosArm64/
-            shared/build/bin/iosX64/
+          path: shared/build/bin/iosArm64/
           retention-days: 7
 
       - name: 🎉 Success Message
         run: |
           echo "🎊 SUCCESS! Your iOS framework is ready!"
-          echo "📱 You can download it from the Artifacts section"
-          echo "🔜 Next step: Create Xcode project to build .ipa file"
+          echo "📱 Download from Artifacts section"
+          echo "📦 File: shared.framework (for real iOS devices)"
