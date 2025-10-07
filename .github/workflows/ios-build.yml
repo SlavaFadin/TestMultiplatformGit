@@ -18,8 +18,8 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: 🍎 Setup Xcode (FIXED)
-        uses: actions/setup-xcode@v1
+      - name: 🍎 Setup Xcode (Official Apple action)
+        uses: apple-actions/setup-xcode@v1
         with:
           xcode-version: '15.2'
 
@@ -32,11 +32,13 @@ jobs:
       - name: 📁 Show Build Results
         run: |
           echo "📂 Build output structure:"
-          find shared/build -type f -name "*.framework" | head -10
+          find shared/build -type f -name "*.framework" 2>/dev/null || echo "No frameworks found yet"
+          echo "📦 Listing build directory:"
+          ls -la shared/build/bin/ || echo "No bin directory yet"
 
       - name: 📦 Upload Build Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: iOS-Build-Output
-          path: shared/build/bin/
+          path: shared/build/
           retention-days: 7
