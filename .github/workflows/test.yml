@@ -1,30 +1,53 @@
-name: Diagnose iOS Build
+name: Build iOS IPA
 
-on: [push]
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
 
 jobs:
-  diagnose:
+  build-ios:
     runs-on: macos-latest
+
     steps:
-      - uses: actions/checkout@v4
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
 
-      - name: Environment Check
-        run: |
-          echo "=== Environment ==="
-          sw_vers
-          xcode-select -p
-          ls /Applications/Xcode.app/Contents/Developer/Platforms/ || echo "No platforms"
+      - name: ☕ Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
 
-      - name: Project Check
-        run: |
-          echo "=== Project Structure ==="
-          ls -la
-          file gradlew
-          ./gradlew --version || echo "Gradle failed"
+      - name: 🍎 Setup Xcode
+        uses: apple-actions/setup-xcode@v1
+        with:
+          xcode-version: '15.2'
 
-      - name: Try iOS Build
+      - name: 🔨 Build KMP Framework
         run: |
-          echo "=== iOS Build Attempt ==="
-          sed -i '' 's/\r$//' gradlew
-          chmod +x ./gradlew
-          ./gradlew :shared:assembleIosX64 --stacktrace || echo "Build failed - check logs"
+          echo "Building shared KMP framework..."
+          ./gradlew :shared:assembleIosArm64
+          echo "✅ iOS framework built!"
+
+      - name: 📱 Create iOS App Structure
+        run: |
+          echo "Creating iOS app structure..."
+          mkdir -p iosApp/iosApp
+          # Здесь будет генерация простого iOS приложения
+
+      - name: 🏗️ Build .ipa File
+        run: |
+          echo "Building .ipa file..."
+          # Этот шаг будет работать ТОЛЬКО после создания Xcode проекта
+          echo "❌ Need Xcode project first!"
+          echo "Create iosApp/ folder with Xcode project to generate .ipa"
+
+      - name: 📦 Upload Results
+        uses: actions/upload-artifact@v4
+        with:
+          name: iOS-Build-Artifacts
+          path: |
+            shared/build/bin/iosArm64/
+            iosApp/
+          retention-days: 7
