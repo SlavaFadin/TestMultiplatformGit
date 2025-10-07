@@ -1,12 +1,9 @@
 name: Build iOS Framework
 
-on:
-  push:
-    branches: [ main ]
-  workflow_dispatch:
+on: [push]
 
 jobs:
-  build-ios-framework:
+  build-ios:
     runs-on: macos-latest
 
     steps:
@@ -19,42 +16,33 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: 🍎 Check Xcode Environment
+      - name: 🔧 Fix Windows files
         run: |
-          echo "Checking Xcode installation..."
-          xcode-select -p
-          xcodebuild -version
-          echo "✅ Xcode is available"
-
-      - name: 🔧 Fix Windows line endings
-        run: |
-          # Исправляем переводы строк для MacOS
           sed -i '' 's/\r$//' gradlew
           chmod +x ./gradlew
 
-      - name: 🔨 Build KMP Framework for iOS
+      - name: 🔨 Build iOS Framework (CORRECT TASKS)
         run: |
-          echo "🚀 Building shared KMP framework for iOS..."
-          ./gradlew :shared:assembleIosArm64 --stacktrace
-          echo "✅ iOS framework built successfully!"
-
-      - name: 📁 Verify Build Results
-        run: |
-          echo "📦 Build output structure:"
-          find shared/build/bin/ -name "*.framework" 2>/dev/null || echo "No frameworks found"
+          echo "🚀 Building iOS frameworks..."
           
-          echo "🔍 iOS Arm64 content:"
-          ls -la shared/build/bin/iosArm64/ || echo "No iosArm64 directory"
+          # Правильные имена задач для KMP iOS:
+          ./gradlew :shared:compileKotlinIosX64
+          ./gradlew :shared:compileKotlinIosArm64
+          ./gradlew :shared:compileKotlinIosSimulatorArm64
+          
+          echo "✅ iOS frameworks built successfully!"
 
-      - name: 📦 Upload iOS Framework
+      - name: 📁 Check Build Results
+        run: |
+          echo "📦 Build output:"
+          find shared/build/bin -name "*.klib" -o -name "*.framework" 2>/dev/null | head -10 || echo "No build files found"
+          
+          echo "🔍 iOS directories:"
+          ls -la shared/build/bin/ || echo "No bin directory"
+
+      - name: 📦 Upload Results
         uses: actions/upload-artifact@v4
         with:
-          name: iOS-Shared-Framework
-          path: shared/build/bin/iosArm64/
+          name: iOS-Frameworks
+          path: shared/build/bin/
           retention-days: 7
-
-      - name: 🎉 Success Message
-        run: |
-          echo "🎊 SUCCESS! Your iOS framework is ready!"
-          echo "📱 Download from Artifacts section"
-          echo "📦 File: shared.framework (for real iOS devices)"
