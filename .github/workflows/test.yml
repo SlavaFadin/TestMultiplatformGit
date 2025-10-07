@@ -44,5 +44,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: iOS-Frameworks
-          path: shared/build/bin/
+          path: shared/build/
           retention-days: 7
