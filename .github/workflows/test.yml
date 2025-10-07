@@ -1,39 +1,30 @@
-name: Build iOS App
+name: Diagnose iOS Build
 
-on:
-  push:
-    branches: [ main ]
-  workflow_dispatch:  # Разрешает ручной запуск
+on: [push]
 
 jobs:
-  build-ios:
-    runs-on: macos-latest  # ⚠️ ТОЛЬКО MacOS!
-
+  diagnose:
+    runs-on: macos-latest
     steps:
-      - name: 📥 Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: ☕ Setup Java
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: '17'
-
-      - name: 🍎 Setup Xcode
-        uses: apple-actions/setup-xcode@v1
-        with:
-          xcode-version: '15.2'
-
-      - name: 🔨 Build KMP for iOS
+      - name: Environment Check
         run: |
-          echo "Building shared module for iOS..."
-          ./gradlew :shared:assembleIosX64
-          ./gradlew :shared:assembleIosArm64
-          echo "✅ iOS frameworks built!"
+          echo "=== Environment ==="
+          sw_vers
+          xcode-select -p
+          ls /Applications/Xcode.app/Contents/Developer/Platforms/ || echo "No platforms"
 
-      - name: 📦 Upload iOS Frameworks
-        uses: actions/upload-artifact@v4
-        with:
-          name: iOS-Frameworks
-          path: shared/build/bin/
-          retention-days: 7
+      - name: Project Check
+        run: |
+          echo "=== Project Structure ==="
+          ls -la
+          file gradlew
+          ./gradlew --version || echo "Gradle failed"
+
+      - name: Try iOS Build
+        run: |
+          echo "=== iOS Build Attempt ==="
+          sed -i '' 's/\r$//' gradlew
+          chmod +x ./gradlew
+          ./gradlew :shared:assembleIosX64 --stacktrace || echo "Build failed - check logs"
