@@ -1,41 +1,39 @@
-name: KMP Build Test
+name: Build iOS App
 
-on: [push]
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:  # Разрешает ручной запуск
 
 jobs:
-  build-kmp:
-    runs-on: ubuntu-latest
+  build-ios:
+    runs-on: macos-latest  # ⚠️ ТОЛЬКО MacOS!
 
     steps:
-      - name: Checkout code
+      - name: 📥 Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Java
+      - name: ☕ Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Check Windows project structure
-        run: |
-          echo "📁 Checking project structure from Windows..."
-          ls -la
-          echo "🔧 Gradle files:"
-          find . -name "*.kts" | head -10
-          echo "📦 Modules:"
-          find . -maxdepth 2 -type d -name "*" | head -10
+      - name: 🍎 Setup Xcode
+        uses: apple-actions/setup-xcode@v1
+        with:
+          xcode-version: '15.2'
 
-      - name: Fix line endings (for Windows)
+      - name: 🔨 Build KMP for iOS
         run: |
-          sed -i 's/\r$//' gradlew  # Fix Windows line endings
-          chmod +x ./gradlew
+          echo "Building shared module for iOS..."
+          ./gradlew :shared:assembleIosX64
+          ./gradlew :shared:assembleIosArm64
+          echo "✅ iOS frameworks built!"
 
-      - name: Test Gradle
-        run: |
-          ./gradlew --version || echo "Gradle check failed"
-
-      - name: Safe build attempt
-        run: |
-          # Пробуем разные варианты сборки
-          ./gradlew tasks --console=plain | head -10 || echo "Cannot list tasks"
-          [ -d "shared" ] && ./gradlew :shared:build || echo "No shared module"
+      - name: 📦 Upload iOS Frameworks
+        uses: actions/upload-artifact@v4
+        with:
+          name: iOS-Frameworks
+          path: shared/build/bin/
+          retention-days: 7
